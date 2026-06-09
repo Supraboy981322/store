@@ -58,7 +58,7 @@ pub fn determine_opts(init:std.process.Init) !Opts {
             };
             unreachable; // $HOME not in env vars
         };
-        opts.path = try std.fmt.allocPrint(init.gpa, "{s}/.local/state/store.bin", .{home_dir});
+        opts.path = try std.mem.join(init.gpa, "/", &.{ home_dir, ".local", "state", "store.bin" });
     }
     return opts;
 }
