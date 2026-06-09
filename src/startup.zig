@@ -1,6 +1,8 @@
 const std = @import("std");
 const types = @import("types.zig");
 
+const stringToEnum = std.meta.stringToEnum;
+
 const Opts = types.Opts;
 
 pub fn determine_opts(init:std.process.Init) !Opts {
@@ -12,13 +14,14 @@ pub fn determine_opts(init:std.process.Init) !Opts {
         break :blk std.mem.absorbSentinel(foo)[0..foo.len];
     };
     const Mode = enum(u2){ get, put, store };
-    var mode = std.meta.stringToEnum(Mode, argv0) orelse .store;
+    var mode = stringToEnum(Mode, argv0) orelse .store;
     sw: switch (mode) {
         .get, .put => {},
         .store => {
             const arg = itr.next() orelse return error.NotEnoughArgs;
-            const a = std.meta.stringToEnum(
-                enum{ path, get, put }, arg
+            const Foo = enum{ path, get, put };
+            var a = stringToEnum(
+                Foo, arg
             ) orelse {
                 opts.key = arg;
                 opts.act = .get;
@@ -28,8 +31,15 @@ pub fn determine_opts(init:std.process.Init) !Opts {
                 }
                 break :sw;
             };
-            if (a == .path) @panic("TODO: path arg");
-            mode = std.meta.stringToEnum(Mode, @tagName(a)).?; //less likely to break
+            if (a == .path) {
+                opts.path = try init.gpa.dupe(u8, itr.next() orelse return error.NotEnoughArgs);
+                a = stringToEnum(
+                    Foo,
+                    itr.next() orelse return error.NotEnoughArgs
+                ) orelse return error.ModeExpected;
+                if (a == .path) return error.MissplacedArg;
+            }
+            mode = stringToEnum(Mode, @tagName(a)).?; //less likely to break
         }
     }
     switch (mode) {
