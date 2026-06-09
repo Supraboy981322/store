@@ -11,38 +11,34 @@ pub fn determine_opts(init:std.process.Init) !Opts {
         if (std.mem.cutScalarLast(u8, foo, '/')) |thing| break :blk thing[1];
         break :blk std.mem.absorbSentinel(foo)[0..foo.len];
     };
-    const mode = std.meta.stringToEnum(
-        enum(u2){ get, put, store }, argv0
-    ).?;
+    const Mode = enum(u2){ get, put, store };
+    var mode = std.meta.stringToEnum(Mode, argv0) orelse .store;
     sw: switch (mode) {
-        inline .get, .put => |w| {
-            opts.act = comptime if (w == .get) .get else .put;
-            opts.key = itr.next() orelse return error.NotEnoughArgs;
-            if (w == .put)
-                opts.val = itr.next() orelse return error.NotEnoughArgs;
-        },
+        .get, .put => {},
         .store => {
             const arg = itr.next() orelse return error.NotEnoughArgs;
             const a = std.meta.stringToEnum(
                 enum{ path, get, put }, arg
             ) orelse {
                 opts.key = arg;
+                opts.act = .get;
                 if (itr.next()) |a| {
                     std.debug.print("unexpected args: |{s}| followed by |{s}|\n", .{arg, a});
                     std.process.exit(1);
                 }
                 break :sw;
             };
-            switch (a) {
-                .path =>
-                    opts.path = itr.next() orelse return error.MissingArg,
-                inline .get, .put => |w| {
-                    opts.act = comptime if (w == .get) .get else .put;
-                    opts.key = itr.next() orelse return error.NotEnoughArgs;
-                    if (w == .put)
-                        opts.val = itr.next() orelse return error.NotEnoughArgs;
-                },
-            }
+            if (a == .path) @panic("TODO: path arg");
+            mode = std.meta.stringToEnum(Mode, @tagName(a)).?; //less likely to break
+        }
+    }
+    switch (mode) {
+        .store => {},
+        inline .get, .put => |w| {
+            opts.act = comptime if (w == .get) .get else .put;
+            opts.key = itr.next() orelse return error.NotEnoughArgs;
+            if (comptime w == .put)
+                opts.val = itr.next() orelse return error.NotEnoughArgs;
         }
     }
     if (opts.path == null) {
