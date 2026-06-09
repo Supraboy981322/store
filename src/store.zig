@@ -16,10 +16,10 @@ pub fn get_val(alloc:std.mem.Allocator, io:std.Io, file:std.Io.File, key:[]const
                 if (c == 0) break;
                 len += c;
             }
-            if (std.mem.eql(u8, k, key)) {
-                return try alloc.dupe(u8, try reader.take(len));
-            } else
-                std.debug.assert(try reader.discard(.limited(len)) == len);
+            if (std.mem.eql(u8, k, key))
+                return try alloc.dupe(u8, try reader.take(len))
+            else
+                if (try reader.discard(.limited(len)) != len) return error.EndOfFile;
             continue;
         }
         n += b;
