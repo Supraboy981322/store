@@ -1,7 +1,14 @@
 const std = @import("std");
 const types = @import("types.zig");
 
+const print = std.debug.print;
+const exit = std.process.exit;
 const stringToEnum = std.meta.stringToEnum;
+const cutScalarLast = std.mem.cutScalarLast;
+const absorbSentinel = std.mem.absorbSentinel;
+const span = std.mem.span;
+const join = std.mem.join;
+const eql = std.mem.eql;
 
 const Opts = types.Opts;
 
@@ -10,8 +17,8 @@ pub fn determine_opts(init:std.process.Init) !Opts {
     var itr = init.minimal.args.iterate();
     const argv0 = blk: {
         const foo = itr.next().?;
-        if (std.mem.cutScalarLast(u8, foo, '/')) |thing| break :blk thing[1];
-        break :blk std.mem.absorbSentinel(foo)[0..foo.len];
+        if (cutScalarLast(u8, foo, '/')) |thing| break :blk thing[1];
+        break :blk absorbSentinel(foo)[0..foo.len];
     };
     const Mode = enum(u2){ get, put, store };
     var mode = stringToEnum(Mode, argv0) orelse .store;
@@ -26,16 +33,17 @@ pub fn determine_opts(init:std.process.Init) !Opts {
                 opts.key = arg;
                 opts.act = .get;
                 if (itr.next()) |a| {
-                    std.debug.print("unexpected args: |{s}| followed by |{s}|\n", .{arg, a});
-                    std.process.exit(1);
+                    print("unexpected args: |{s}| followed by |{s}|\n", .{arg, a});
+                    exit(1);
                 }
                 break :sw;
             };
             if (a == .path) {
-                opts.path = try init.gpa.dupe(u8, itr.next() orelse return error.NotEnoughArgs);
+                opts.path = try init.gpa.dupe(
+                    u8, itr.next() orelse return error.NotEnoughArgs
+                );
                 a = stringToEnum(
-                    Foo,
-                    itr.next() orelse return error.NotEnoughArgs
+                    Foo, itr.next() orelse return error.NotEnoughArgs
                 ) orelse return error.ModeExpected;
                 if (a == .path) return error.MissplacedArg;
             }
@@ -56,15 +64,17 @@ pub fn determine_opts(init:std.process.Init) !Opts {
             const env = init.minimal.environ.block.slice;
             for (env) |thing| if (thing) |c_set| {
                 var i:usize = 0;
-                const set = std.mem.span(c_set);
+                const set = span(c_set);
                 for (set) |b| {
                     if (b == '=') break else i += 1;
                 }
-                if (std.mem.eql(u8, "HOME", set[0..i])) break :blk set[i+1..];
+                if (eql(u8, "HOME", set[0..i])) break :blk set[i+1..];
             };
             unreachable; // $HOME not in env vars
         };
-        opts.path = try std.mem.join(init.gpa, "/", &.{ home_dir, ".local", "state", "store.bin" });
+        opts.path = try join(
+            init.gpa, "/", &.{ home_dir, ".local", "state", "store.bin" }
+        );
     }
     return opts;
 }
