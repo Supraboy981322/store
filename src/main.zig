@@ -27,7 +27,8 @@ pub fn main(init:std.process.Init) !u8 {
             try stdout.flush();
         },
         .put => {
-            if (try store.get_val(init.gpa, init.io, file, opts.key.?)) |_| @panic("TODO: overwrite existing data");
+            if (try store.get_val(init.gpa, init.io, file, opts.key.?)) |_|
+                @panic("TODO: overwrite existing data"); //I know how I can do this, but I'd like to think of a more elegant solution
             try store.put_val(init.io, file,opts.key.?, opts.val.?);
         },
     }
