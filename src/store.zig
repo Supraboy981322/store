@@ -5,27 +5,26 @@ pub fn get_val(alloc:std.mem.Allocator, io:std.Io, file:std.Io.File, key:[]const
     var buf:[1024]u8 = undefined;
     var useless_reader = file.reader(io, &buf);
     const reader = &useless_reader.interface;
-    var val:?[]const u8 = null;
 
     var n:usize = 0;
     while (try hlp.wrap(reader.takeByte())) |b| {
         if (b == 0) {
-            defer n = 0;
             const k = try reader.take(n);
-            if (std.mem.eql(u8, k, key)) {
-                var len:usize = 0;
-                while (try hlp.wrap(reader.takeByte())) |c| {
-                    if (c == 0) break;
-                    len += c;
-                }
-                val = try alloc.dupe(u8, try reader.take(len));
-                break;
+            n = 0;
+            var len:usize = 0;
+            while (try hlp.wrap(reader.takeByte())) |c| {
+                if (c == 0) break;
+                len += c;
             }
+            if (std.mem.eql(u8, k, key)) {
+                return try alloc.dupe(u8, try reader.take(len));
+            } else
+                std.debug.assert(try reader.discard(.limited(len)) == len);
             continue;
         }
         n += b;
     }
-    return val;
+    return null;
 }
 
 pub fn put_val(io:std.Io, file:std.Io.File, key:[]const u8, val:[]const u8) !void {
