@@ -1,7 +1,12 @@
 const std = @import("std");
 const hlp = @import("helpers.zig");
 
-pub fn get_val(alloc:std.mem.Allocator, io:std.Io, file:std.Io.File, key:[]const u8) !?[]const u8 {
+pub fn get_val(
+    alloc:std.mem.Allocator,
+    io:std.Io,
+    file:std.Io.File,
+    key:[]const u8
+) !?[]const u8 {
     var buf:[1024]u8 = undefined;
     var useless_reader = file.reader(io, &buf);
     const reader = &useless_reader.interface;
@@ -27,8 +32,12 @@ pub fn get_val(alloc:std.mem.Allocator, io:std.Io, file:std.Io.File, key:[]const
     return null;
 }
 
-pub fn put_val(io:std.Io, file:std.Io.File, key:[]const u8, val:[]const u8) !void {
-
+pub fn put_val(
+    io:std.Io,
+    file:std.Io.File,
+    key:[]const u8,
+    val:[]const u8
+) !void {
     var buf:[1024]u8 = undefined;
     var useless_writer = file.writer(io, &buf);
     try useless_writer.seekTo(try file.length(io));
