@@ -24,7 +24,8 @@ pub fn get_val(
             if (std.mem.eql(u8, k, key))
                 return try alloc.dupe(u8, try reader.take(len))
             else
-                if (try reader.discard(.limited(len)) != len) return error.EndOfFile;
+                if (try reader.discard(.limited(len)) != len)
+                    return error.EndOfFile;
             continue;
         }
         n += b;
