@@ -26,9 +26,9 @@ pub fn determine_opts(init:std.process.Init) !Opts {
         .get, .put => {},
         .store => {
             const arg = itr.next() orelse return error.NotEnoughArgs;
-            const Foo = enum{ path, get, put };
+            const Args = enum{ path, get, put };
             var a = stringToEnum(
-                Foo, arg
+                Args, arg
             ) orelse {
                 opts.key = arg;
                 opts.act = .get;
@@ -43,7 +43,7 @@ pub fn determine_opts(init:std.process.Init) !Opts {
                     u8, itr.next() orelse return error.NotEnoughArgs
                 );
                 a = stringToEnum(
-                    Foo, itr.next() orelse return error.NotEnoughArgs
+                    Args, itr.next() orelse return error.NotEnoughArgs
                 ) orelse return error.ModeExpected;
                 if (a == .path) return error.MissplacedArg;
             }
