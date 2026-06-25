@@ -20,13 +20,13 @@ pub fn determine_opts(init:std.process.Init) !Opts {
         if (cutScalarLast(u8, foo, '/')) |thing| break :blk thing[1];
         break :blk absorbSentinel(foo)[0..foo.len];
     };
-    const Mode = enum(u2){ get, put, store, dump };
+    const Mode = enum(u3){ get, put, store, dump, del };
     var mode = stringToEnum(Mode, argv0) orelse .store;
     sw: switch (mode) {
-        .get, .put, .dump => {},
+        .get, .put, .dump, .del => {},
         .store => {
             const arg = itr.next() orelse return error.NotEnoughArgs;
-            const Args = enum{ path, get, put, dump };
+            const Args = enum{ path, get, put, dump, del };
             var a = stringToEnum(
                 Args, arg
             ) orelse {
@@ -53,8 +53,8 @@ pub fn determine_opts(init:std.process.Init) !Opts {
     switch (mode) {
         .store => {},
         .dump => opts.act = .dump,
-        inline .get, .put => |w| {
-            opts.act = comptime if (w == .get) .get else .put;
+        inline .get, .put, .del => |w| {
+            opts.act = comptime if (w == .get) .get else if (w == .del) .del else .put;
             opts.key = itr.next() orelse return error.NotEnoughArgs;
             if (comptime w == .put)
                 opts.val = itr.next() orelse return error.NotEnoughArgs;
