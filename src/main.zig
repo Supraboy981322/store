@@ -36,8 +36,10 @@ pub fn main(init:std.process.Init) !u8 {
             try stdout.flush();
         },
         .put => {
-            if (try store.get_val(init.gpa, init.io, file, opts.key.?)) |_|
-                @panic("TODO: overwrite existing data"); //I know how I can do this, but I'd like to think of a more elegant solution
+            if (try store.get_val(init.gpa, init.io, file, opts.key.?)) |v| {
+                try store.del(init.io, file, opts.key.?);
+                init.gpa.free(v);
+            }
             try store.put_val(init.io, file,opts.key.?, opts.val.?);
         },
         .dump => {
@@ -47,7 +49,7 @@ pub fn main(init:std.process.Init) !u8 {
             try store.dump(init.io, file, &writer.interface);
         },
         .del =>
-            try store.del(init.io, file,opts.key.?),
+            try store.del(init.io, file, opts.key.?),
     }
     return 0;
 }
