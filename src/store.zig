@@ -62,3 +62,30 @@ pub fn put_val(
     try writer.writeAll(val);
     try writer.flush();
 }
+
+pub fn dump(
+    io:std.Io,
+    db:std.Io.File,
+    writer:*std.Io.Writer,
+) !void {
+    var buf:[1024]u8 = undefined;
+    var useless_reader = db.reader(io, &buf);
+    const reader = &useless_reader.interface;
+
+    var n:usize = 0;
+    while (try hlp.wrap(reader.takeByte())) |b| {
+        if (b == 0) {
+            const k = try reader.take(n);
+            n = 0;
+            var len:usize = 0;
+            while (try hlp.wrap(reader.takeByte())) |c| {
+                if (c == 0) break;
+                len += c;
+            }
+            try writer.print("\n{s}\n\t{x}\n", .{k, try reader.take(len)});
+            try writer.flush();
+            continue;
+        }
+        n += b;
+    }
+}

@@ -40,6 +40,12 @@ pub fn main(init:std.process.Init) !u8 {
                 @panic("TODO: overwrite existing data"); //I know how I can do this, but I'd like to think of a more elegant solution
             try store.put_val(init.io, file,opts.key.?, opts.val.?);
         },
+        .dump => {
+            var stdout_file:std.Io.File = .stdout();
+            var buf:[1024]u8 = undefined;
+            var writer = stdout_file.writer(init.io, &buf);
+            try store.dump(init.io, file, &writer.interface);
+        },
     }
     return 0;
 }
