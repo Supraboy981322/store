@@ -48,8 +48,12 @@ pub fn main(init:std.process.Init) !u8 {
             var writer = stdout_file.writer(init.io, &buf);
             try store.dump(init.io, file, &writer.interface);
         },
-        .del =>
-            try store.del(init.io, file, opts.key.?),
+        .del => {
+            store.del(init.io, file, opts.key.?) catch {
+                print("key not found: |{s}|\n", .{opts.key.?});
+                return 1;
+            };
+        },
     }
     return 0;
 }
