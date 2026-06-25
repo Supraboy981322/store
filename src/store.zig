@@ -82,7 +82,16 @@ pub fn dump(
                 if (c == 0) break;
                 len += c;
             }
-            try writer.print("\n{s}\n\t{x}\n", .{k, try reader.take(len)});
+            const val = try reader.take(len);
+            const is_ascii = for (val) |c| {
+                if (!std.ascii.isAscii(c)) break false;
+            } else true;
+            try writer.print("\n{s}\n\t", .{k});
+            if (is_ascii)
+                try writer.writeAll(val)
+            else
+                for (val) |c| try writer.print(" 0x{X}", .{c});
+            try writer.writeAll("\n");
             try writer.flush();
             continue;
         }
